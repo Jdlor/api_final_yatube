@@ -1,10 +1,12 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, viewsets, mixins, filters
 from .permissions import IsAuthorOrReadOnly
 from posts.models import Group, Post
-
 from .serializers import (
-    CommentSerializer, GroupSerializer, PostSerializer, UserSerializer, CustomTokenObtainPairSerializer
+    CommentSerializer,
+    GroupSerializer,
+    PostSerializer,
+    FollowSerializer
 )
 
 
@@ -27,7 +29,6 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsAuthorOrReadOnly]
 
     def get_post(self):
-
         post_id = self.kwargs.get('post_id')
         return get_object_or_404(Post, pk=post_id)
 
@@ -39,7 +40,8 @@ class CommentViewSet(viewsets.ModelViewSet):
             author=self.request.user,
             post=self.get_post()
         )
-    
+
+
 class FollowViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
