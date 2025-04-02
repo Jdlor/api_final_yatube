@@ -3,6 +3,7 @@ from django.urls import include, path
 from django.views.generic import TemplateView
 from rest_framework.authtoken import views
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
@@ -17,4 +18,3 @@ urlpatterns = [
         name='api_token_auth'
     ),
 ]
-
