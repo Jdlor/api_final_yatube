@@ -12,9 +12,4 @@ urlpatterns = [
         TemplateView.as_view(template_name='redoc.html'),
         name='redoc'
     ),
-    path(
-        'api/v1/api-token-auth/',
-        views.obtain_auth_token,
-        name='api_token_auth'
-    ),
 ]
