@@ -30,6 +30,14 @@ class Post(models.Model):
         null=True,
         blank=True
     )
+    group = models.ForeignKey(
+        'Group',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='posts'
+    )
+
 
     def __str__(self):
         return self.text
