@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, viewsets, mixins, filters, response
 from .permissions import IsAuthorOrReadOnly
+from django.db.models import Q
 from posts.models import Group, Post, Comment
 from .serializers import (
     CommentSerializer,
@@ -87,8 +88,8 @@ class FollowViewSet(
         search_query = self.request.query_params.get('search')
         if search_query:
             return queryset.filter(
-                Q(user__username__icontains=search_query) |
-                Q(following__username__icontains=search_query)
+                Q(user__username__icontains=search_query)
+                | Q(following__username__icontains=search_query)
             )
         return queryset
 
