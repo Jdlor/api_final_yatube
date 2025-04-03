@@ -1,5 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from djoser.views import TokenCreateView
+from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
 from .views import PostViewSet, GroupViewSet, CommentViewSet, FollowViewSet
 
@@ -18,4 +20,7 @@ urlpatterns = [
     path('v1/', include(router.urls)),
     path('', include('djoser.urls')),
     path('', include('djoser.urls.jwt')),
+    path('v1/jwt/create/', TokenCreateView.as_view(), name='jwt-create'),
+    path('v1/jwt/refresh/', TokenRefreshView.as_view(), name='jwt-refresh'),
+    path('v1/jwt/verify/', TokenVerifyView.as_view(), name='jwt-verify'),
 ]
