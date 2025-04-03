@@ -78,7 +78,7 @@ class FollowViewSet(
         user = self.request.user
         search_query = self.request.query_params.get('search')
         if not user.is_authenticated:
-            return Comment.objects.none()  
+            return Comment.objects.none()
         queryset = user.follower.all()
         if search_query:
             return queryset.filter(
