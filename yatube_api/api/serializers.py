@@ -23,10 +23,8 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    author = serializers.ReadOnlyField(
-        source='author.username'
-    )
-    post = serializers.ReadOnlyField(source='post.id')
+    author = serializers.ReadOnlyField(source='author.username')
+    post = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         fields = '__all__'
