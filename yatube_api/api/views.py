@@ -13,10 +13,16 @@ from .serializers import (
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly,
+        IsAuthorOrReadOnly
+    ]
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, post_id=self.kwargs['post_id'])
+        serializer.save(
+            author=self.request.user,
+            post_id=self.kwargs['post_id']
+        )
 
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
@@ -26,7 +32,10 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly,
+        IsAuthorOrReadOnly
+    ]
 
     def get_post(self):
         post_id = self.kwargs.get('post_id')
@@ -52,7 +61,7 @@ class FollowViewSet(
     search_fields = ('following__username', 'user__username')
 
     def get_queryset(self):
-        if request.user.is_authenticated:
+        if self.request.user.is_authenticated:
             return self.request.user.follower.all()
 
     def perform_create(self, serializer):
