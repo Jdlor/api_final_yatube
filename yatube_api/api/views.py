@@ -34,7 +34,6 @@ class PostViewSet(viewsets.ModelViewSet):
                for param in ('limit', 'offset')):
             self.pagination_class = pagination.LimitOffsetPagination
             return super().list(request, *args, **kwargs)
-        
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
         return response.Response(serializer.data)
@@ -78,16 +77,13 @@ class FollowViewSet(
     def get_queryset(self):
         user = self.request.user
         search_query = self.request.query_params.get('search')
-        
         if not user.is_authenticated:
-            return Comment.objects.none()
-            
+            return Comment.objects.none()  
         queryset = user.follower.all()
-        
         if search_query:
             return queryset.filter(
-                Q(user__username__icontains=search_query) |
-                Q(following__username__icontains=search_query)
+                Q(user__username__icontains=search_query)
+                | Q(following__username__icontains=search_query)
             )
         return queryset
 
