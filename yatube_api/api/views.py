@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, viewsets, mixins, filters, response
+from rest_framework import permissions, viewsets, mixins, filters, response, pagination
 from .permissions import IsAuthorOrReadOnly
 from django.db.models import Q
 from posts.models import Group, Post, Comment
@@ -26,11 +26,14 @@ class PostViewSet(viewsets.ModelViewSet):
         )
 
     def list(self, request, *args, **kwargs):
+        if request.query_params.get('limit') or request.query_params.get('offset'):
+            self.pagination_class = pagination.LimitOffsetPagination
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
         queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(queryset, many=True)
         return response.Response(serializer.data)
 
