@@ -1,8 +1,15 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, viewsets, mixins, filters, response, pagination
-from .permissions import IsAuthorOrReadOnly
 from django.db.models import Q
+from rest_framework import (
+    permissions,
+    viewsets,
+    mixins,
+    filters,
+    response,
+    pagination
+)
 from posts.models import Group, Post, Comment
+from .permissions import IsAuthorOrReadOnly
 from .serializers import (
     CommentSerializer,
     GroupSerializer,
@@ -20,19 +27,14 @@ class PostViewSet(viewsets.ModelViewSet):
     ]
 
     def perform_create(self, serializer):
-        serializer.save(
-            author=self.request.user,
-            post_id=self.kwargs['post_id']
-        )
+        serializer.save(author=self.request.user)
 
     def list(self, request, *args, **kwargs):
-        if request.query_params.get('limit') or request.query_params.get('offset'):
+        if any(param in request.query_params
+               for param in ('limit', 'offset')):
             self.pagination_class = pagination.LimitOffsetPagination
-            queryset = self.filter_queryset(self.get_queryset())
-            page = self.paginate_queryset(queryset)
-            if page is not None:
-                serializer = self.get_serializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
+            return super().list(request, *args, **kwargs)
+        
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
         return response.Response(serializer.data)
@@ -41,14 +43,7 @@ class PostViewSet(viewsets.ModelViewSet):
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
-    permission_classes = [
-        permissions.IsAuthenticatedOrReadOnly
-    ]
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return response.Response(serializer.data)
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -58,24 +53,16 @@ class CommentViewSet(viewsets.ModelViewSet):
         IsAuthorOrReadOnly
     ]
 
-    def get_post(self):
-        post_id = self.kwargs.get('post_id')
-        return get_object_or_404(Post, pk=post_id)
-
     def get_queryset(self):
-        post_id = self.kwargs['post_id']
-        return Comment.objects.filter(post_id=post_id)
+        post = get_object_or_404(Post, pk=self.kwargs['post_id'])
+        return post.comments.all()
 
     def perform_create(self, serializer):
+        post = get_object_or_404(Post, pk=self.kwargs['post_id'])
         serializer.save(
             author=self.request.user,
-            post_id=self.kwargs['post_id']
+            post=post
         )
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return response.Response(serializer.data)
 
 
 class FollowViewSet(
@@ -84,26 +71,25 @@ class FollowViewSet(
     viewsets.GenericViewSet
 ):
     serializer_class = FollowSerializer
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = (filters.SearchFilter,)
-    permission_classes = [
-        permissions.IsAuthenticated
-    ]
     search_fields = ('following__username', 'user__username')
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        user = self.request.user
         search_query = self.request.query_params.get('search')
+        
+        if not user.is_authenticated:
+            return Comment.objects.none()
+            
+        queryset = user.follower.all()
+        
         if search_query:
             return queryset.filter(
-                Q(user__username__icontains=search_query)
-                | Q(following__username__icontains=search_query)
+                Q(user__username__icontains=search_query) |
+                Q(following__username__icontains=search_query)
             )
         return queryset
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return response.Response(serializer.data)
